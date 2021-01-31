@@ -205,6 +205,29 @@ namespace Namotion.Reflection
         }
 
         /// <summary>
+        /// Gets a <see cref="ContextualMethodInfo"/> for the given <see cref="MethodInfo"/> instance.
+        /// </summary>
+        /// <param name="methodInfo">The method info.</param>
+        /// <returns>The <see cref="ContextualMethodInfo"/>.</returns>
+        public static ContextualMethodInfo ToContextualMethod(this MethodInfo methodInfo)
+        {
+            var key = "Method:" + methodInfo.Name + ":" + methodInfo.DeclaringType.FullName; // TODO: Handle overloads
+            if (!Cache.ContainsKey(key))
+            {
+                lock (Lock)
+                {
+                    if (!Cache.ContainsKey(key))
+                    {
+                        var index = 0;
+                        Cache[key] = new ContextualMethodInfo(methodInfo, ref index);
+                    }
+                }
+            }
+
+            return (ContextualMethodInfo)Cache[key];
+        }
+
+        /// <summary>
         /// Gets a <see cref="ContextualMemberInfo"/> for the given <see cref="MemberInfo"/> instance.
         /// </summary>
         /// <param name="memberInfo">The member info.</param>
@@ -218,6 +241,9 @@ namespace Namotion.Reflection
             else if (memberInfo is FieldInfo fieldInfo)
             {
                 return fieldInfo.ToContextualField();
+            } else if (memberInfo is MethodInfo methodInfo)
+            {
+                return methodInfo.ToContextualMethod();
             }
 
             throw new NotSupportedException();
